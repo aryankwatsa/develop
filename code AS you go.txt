@@ -1,0 +1,29 @@
+@echo off
+setlocal
+
+set "excludeFolder=excludeFolderName"  :: Change this to the folder name you want to exclude
+set "daysAgo=7"
+
+:: Get the current date and the date 7 days ago
+for /f "tokens=1-3 delims=/ " %%a in ('echo %date%') do (
+    set currentDate=%%c-%%a-%%b
+)
+powershell -command "$d = [datetime]::Today.AddDays(-%daysAgo%); $d.ToString('yyyy-MM-dd')" > date.txt
+set /p dateAgo=<date.txt
+del date.txt
+
+:: Loop through each folder
+for /f "tokens=*" %%F in ('dir /b /ad') do (
+    set folderName=%%F
+    for /f "tokens=1-3 delims= " %%a in ('dir "%%F" /tc ^| find "  " ^| find /v "Directory"') do (
+        set modifiedDate=%%c-%%a-%%b
+    )
+    if "%%F" neq "%excludeFolder%" (
+        if "%modifiedDate%" lss "%dateAgo%" (
+            echo Deleting folder %%F
+            rmdir /S /Q "%%F"
+        )
+    )
+)
+
+endlocal
